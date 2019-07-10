@@ -14,26 +14,34 @@ import keras.backend as K
 
 #####################################################33
 ###    Performance test
-def loader(snr):
+def loader(snr1,snr2):
 	path='../segmentation_dataset/'
 
-	dataset=np.load(os.path.join(path,'dataset_snr'+str(snr)+'.npz'))
-	data=dataset['data']
-	label=dataset['label']
+	dataset1=np.load(os.path.join(path,'dataset_snr'+str(snr1)+'.npz'))
+	data1=dataset1['data']
+	label1=dataset1['label']
+	dataset2=np.load(os.path.join(path,'dataset_snr'+str(snr2)+'.npz'))
+	data2=dataset2['data']
+	label2=dataset2['label']
 
-	data=np.expand_dims(data, axis=4)
-	label1=np.reshape(label,(label.shape[0],(np.prod(label.shape[1:]))))
-	label=keras.utils.to_categorical(label1,num_classes=2)
+	data1=np.expand_dims(data1, axis=4)
+	label1=np.reshape(label1,(label1.shape[0],(np.prod(label1.shape[1:]))))
+	label1=keras.utils.to_categorical(label1,num_classes=2)
 
-	num=data.shape[0]
-	tmp=int(0.9*num)
+	data2=np.expand_dims(data2, axis=4)
+	label2=np.reshape(label2,(label2.shape[0],(np.prod(label2.shape[1:]))))
+	label2=keras.utils.to_categorical(label2,num_classes=2)
 	# Data preprocessing
-	trainX=data[0:tmp] 
-	trainY=label1[0:tmp] 
+	trainX=data1
+	trainY=label1
 	trainY=keras.utils.to_categorical(trainY,num_classes=2)
 
-	testX=data[tmp:] 
-	testY=label1[tmp:] 
+	testX=data2
+	testY=label2
+	print(trainX.shape)
+	print(trainY.shape)
+	print(testX.shape)
+	print(testY.shape)
 	testY=keras.utils.to_categorical(testY,num_classes=2)
 	return trainX,trainY,testX,testY
 
@@ -91,7 +99,7 @@ if __name__ == '__main__':
 	# set_session(tf.Session(config=config)) 
 
 
-	trainX,trainY,testX,testY=loader(500)  # arg: snr= 10000, 500, 100
+	trainX,trainY,testX,testY=loader(500,100)  # arg: snr= 10000, 500, 100
 	#model=FCN8(data.shape[1:])  model=FCN_aspp(trainX.shape[1:])
 	batch=12
 	model=FCN_ed(trainX.shape[1:])
