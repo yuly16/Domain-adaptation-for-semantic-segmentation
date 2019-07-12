@@ -3,8 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 class FCN_nd(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, aux_output = False):
         super(FCN_nd,self).__init__()
+        self.aux_output = aux_output
         self.conv1_1 = nn.Sequential(nn.Conv3d(1,32,3,padding=1),nn.ReLU())
         self.conv1_2 = nn.Sequential(nn.Conv3d(32,32,3,padding=1),nn.ReLU())
         self.pool1 = nn.MaxPool3d((2, 2, 2), stride=(2, 2, 2))
@@ -34,24 +35,6 @@ class FCN_nd(torch.nn.Module):
 
         self.upscore4 = nn.Conv3d(32,2,1)
         self.sigmoid = torch.nn.Sigmoid()
-    # score1_1=Conv3D(128, 1, padding='same',activation='relu')(pool3)  
-    # upscore1=UpSampling3D((2,2,2))(score1_1)
-
-    # score_pool1=Conv3D(128, 1, padding='same')(pool2) 
-    # score1=Add()([upscore1,score_pool1])
-
-    # score2_1=Conv3D(64, 1, padding='same',activation='relu')(score1)    
-    # upscore2=UpSampling3D((2,2,2))(score2_1)
-
-    # score_pool2=Conv3D(64, 1, padding='same')(pool1) 
-    # score2=Add()([upscore2,score_pool2])
-
-    # score3_1=Conv3D(32, 1, padding='same',activation='relu')(score2)  
-    # upscore3=UpSampling3D((2,2,2))(score3_1)
-    # #upscore4=checker(upscore3,input_img)
-    # upscore4=Conv3D(2, 1, padding='same')(upscore3)  
-    # output1=Reshape((np.prod(img_shape), 2))(upscore4)
-    # output=Activation('softmax')(output1)
 
     def forward(self,input):
         hidden1 = self.conv1(input)
@@ -66,5 +49,38 @@ class FCN_nd(torch.nn.Module):
         output = torch.reshape(hidden, (input.shape[0],2,np.prod(input.shape[1:])))
         output = torch.transpose(output,1,2)
         output=self.sigmoid(output)
+        if self.aux_output == False:
+            return output
+        else:
+            return output, hidden
+
+class Discriminator(torch.nn.Module):
+    def __init__(self):
+        super(Discriminator,self).__init__()
+        self.conv1_1 = nn.Sequential(nn.Conv3d(2,32,3,padding=1),nn.ReLU())
+        self.pool1 = nn.MaxPool3d((2, 2, 2), stride=(2, 2, 2))
+        self.conv1 = nn.Sequential(self.conv1_1,self.pool1)
+
+        self.conv2_1 = nn.Sequential(nn.Conv3d(32,64,3,padding=1),nn.ReLU())
+        self.pool2 = nn.MaxPool3d((2, 2, 2), stride=(2, 2, 2))
+        self.conv2 = nn.Sequential(self.conv2_1,self.pool2)
+
+        self.conv3_1 = nn.Sequential(nn.Conv3d(64,128,3,padding=1),nn.ReLU())
+        self.pool3 = nn.MaxPool3d((2, 2, 2), stride=(2, 2, 2))
+        self.conv3 = nn.Sequential(self.conv3_1,self.pool3)
+
+        self.conv4_1 = nn.Sequential(nn.Conv3d(128,256,3,padding=1),nn.ReLU())
+        self.pool4 = nn.MaxPool3d((5, 5, 5), stride=(2, 2, 2))
+        self.conv4 = nn.Sequential(self.conv4_1,self.pool4)
+
+        self.linear1 = nn.Sequential(nn.Linear(256,64),nn.LeakyReLU())
+        self.linear2 = nn.Sequential(nn.Linear(64,2),nn.Sigmoid())
+    def forward(self,input):
+        hidden = self.conv1(input)
+        hidden = self.conv2(hidden)
+        hidden = self.conv3(hidden)
+        hidden = self.conv4(hidden)
+        hidden = torch.reshape(hidden,hidden.shape[0:2])
+        hidden = self.linear1(hidden)
+        output = self.linear2(hidden)
         return output
-        

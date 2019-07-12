@@ -6,7 +6,7 @@ import keras
 import argparse
 from torch.utils.data import DataLoader
 from CECT_dataloader import CECT_dataset
-from model import FCN_nd
+from model import *
 from tqdm import tqdm
 def meanIoU(y_pred, y_true):
     iou=np.zeros(2)
@@ -58,6 +58,7 @@ def main(opt):
 	cectB_dataset = CECT_dataset(path=opt['tar_data'])
 	cectB_dataloader = DataLoader(dataset=cectB_dataset,batch_size=opt['batch_size'],shuffle=True)
 	model = FCN_nd()
+	model = nn.DataParallel(model,device_ids=[0, 2])
 	model = model.to(device)
 	optimizer=torch.optim.Adam(model.parameters(),lr=0.001,betas=(0.9,0.99), eps=0, weight_decay=1e-8)
 
@@ -94,7 +95,7 @@ def main(opt):
 if __name__ == '__main__':
 	parser=argparse.ArgumentParser()
 	parser.add_argument('--n_epoches',type=int,default=20)
-	parser.add_argument('--batch_size',type=int,default=64)
+	parser.add_argument('--batch_size',type=int,default=80)
 	parser.add_argument('--src_data',type=str,default='../segmentation_dataset/dataloader_10000')
 	parser.add_argument('--tar_data',type=str,default='../segmentation_dataset/dataloader_100')
 	opt=vars(parser.parse_args())
