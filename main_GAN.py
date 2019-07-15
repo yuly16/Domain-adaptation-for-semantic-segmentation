@@ -49,8 +49,8 @@ def preprocess(snr):
 
 def main(opt):
 	use_cuda=True if torch.cuda.is_available() else False
-	device=torch.device('cuda:1') if use_cuda else torch.device('cpu')
-	device_ids = [1]
+	device=torch.device('cuda:2') if use_cuda else torch.device('cpu')
+	device_ids = [2]
 	torch.manual_seed(1)
 	if use_cuda:
 		torch.cuda.manual_seed(1)
@@ -149,11 +149,12 @@ def main(opt):
 			print('mIoU = %f'%mIoU)
 
 if __name__ == '__main__':
+	preprocess(500)
 	parser=argparse.ArgumentParser()
-	parser.add_argument('--n_epoches',type=int,default=10)
+	parser.add_argument('--n_epoches',type=int,default=2)
 	parser.add_argument('--batch_size',type=int,default=20)
 	parser.add_argument('--src_data',type=str,default='../segmentation_dataset/dataloader_10000')
-	parser.add_argument('--tar_data',type=str,default='../segmentation_dataset/dataloader_100')
+	parser.add_argument('--tar_data',type=str,default='../segmentation_dataset/dataloader_500')
 	opt=vars(parser.parse_args())
 	main(opt)
 
