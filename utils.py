@@ -1,18 +1,19 @@
 import numpy as np
 import torch
-def CORAL(X_s,X_t,device):
-    dim=X_s.shape[1]
-    n_s=X_s.shape[0]
-    ones=torch.ones([1,n_s]).to(device)
-    ones=ones.mm(X_s)
+import os
+def sample_generation(pre,label,n):
+    if not os.path.exists('samples'):
+        os.mkdir('samples')
+    for i in range(n):
+        label_ = np.array(label[i].cpu())
+        pre_ = np.array(pre[i].cpu())
+        np.save('samples/label_%d.npy'%i,label_)
+        np.save('samples/pre_%d.npy'%i,pre_)
 
-    Cs=(X_s.transpose(0,1).mm(X_s)-ones.transpose(0,1).mm(ones)/n_s)/(n_s-1)
-
-    n_t=X_t.shape[0]
-    ones = torch.ones([1, n_t]).to(device)
-    ones=ones.mm(X_t)
-
-    Ct=(X_t.transpose(0,1).mm(X_t)-ones.transpose(0,1).mm(ones)/n_t)/(n_t-1)
-
+    
+def CORAL_3D(X_s,X_t,device):
+    dim=np.prod(X_s.shape[1:])
+    Cs = X_s.sum(0)
+    Ct = X_t.sum(0)
     loss=torch.norm(Cs-Ct)/4/dim/dim
     return loss
